@@ -34,11 +34,13 @@ const userSchema = new mongoose.Schema(
     location: {
       lat: {
         type: Number,
-        required: true,
+        required: false,
+        default: null,
       },
       lng: {
         type: Number,
-        required: true,
+        required: false,
+        default: null,
       },
     },
 

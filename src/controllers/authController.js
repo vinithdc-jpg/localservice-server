@@ -73,11 +73,13 @@ export const registerUser = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Register Error:", error);
+        console.error("Register Error:", error.message);
+        console.error("Register Error Details:", error);
 
         return res.status(500).json({
             success: false,
             message: "Internal Server Error",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
         });
     }
 };
