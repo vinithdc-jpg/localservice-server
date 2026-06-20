@@ -3,45 +3,43 @@ import User from "../models/User.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
-    // Read Authorization Header
     const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        success: false,
-        message: "Authorization token required",
-      });
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Authorization token required" });
     }
 
     const token = authHeader.split(" ")[1];
-
-    // Verify JWT
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    // Attach user to request
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     req.user = user;
-
-    // Call next()
     next();
-
-  } catch (error) {
-    console.error("Auth Middleware Error:", error);
-
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired token",
-    });
+  } catch {
+    return res.status(401).json({ success: false, message: "Invalid or expired token" });
   }
+};
+
+export const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await User.findById(decoded.id).select("-password");
+    }
+  } catch {
+    req.user = null;
+  }
+  next();
+};
+
+export const adminMiddleware = (req, res, next) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Admin access required" });
+  }
+  next();
 };
